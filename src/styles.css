@@ -386,7 +386,7 @@ select {
 /* ---------- botões auxiliares ---------- */
 .btn-add {
   width: auto;
-  min-height: 40px;
+  min-height: var(--tap);
   padding: 0 14px;
   font-size: 14px;
   border-radius: 999px;
@@ -394,7 +394,7 @@ select {
 
 .btn-inline {
   width: auto;
-  min-height: 40px;
+  min-height: var(--tap);
   padding: 0 16px;
   flex: none;
 }
