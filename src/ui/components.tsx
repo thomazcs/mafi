@@ -13,9 +13,10 @@ export function Card({ children, onClick }: { children: ReactNode; onClick?: () 
       onKeyDown={
         clickable
           ? e => {
+              if (e.target !== e.currentTarget) return
               if (e.key === 'Enter' || e.key === ' ') {
                 e.preventDefault()
-                onClick!()
+                onClick?.()
               }
             }
           : undefined
@@ -30,13 +31,13 @@ export function Badge({ kind, children }: { kind: 'warn' | 'ok' | 'accent'; chil
   return <span className={`badge badge-${kind}`}>{children}</span>
 }
 
-export function CheckCircle({ checked, onChange }: { checked: boolean; onChange: () => void }) {
+export function CheckCircle({ checked, onChange, label }: { checked: boolean; onChange: () => void; label?: string }) {
   return (
     <button
       type="button"
       className={checked ? 'check-circle is-checked' : 'check-circle'}
       aria-pressed={checked}
-      aria-label={checked ? 'Desmarcar presença' : 'Marcar presença'}
+      aria-label={label ?? (checked ? 'Desmarcar presença' : 'Marcar presença')}
       onClick={e => {
         e.stopPropagation()
         onChange()
