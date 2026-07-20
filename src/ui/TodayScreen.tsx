@@ -137,7 +137,15 @@ function PatientRow({
   const usadas = patient.pacote === 'dez_sessoes' ? openCycle(state, patient.id)?.sessoesUsadas ?? 0 : null
 
   const badgeLabel = alert === 'renovar_dez' ? 'Renovar pacote' : alert === 'renovar_mensal' ? 'Fim do mês' : null
-  const pagamentoPendente = state.payments.some(p => p.patientId === patient.id && !p.pago)
+  // pendência só vira badge quando é acionável: atraso de mês anterior, sessão avulsa
+  // já feita, ou dentro da janela de renovação (fim do mês / pacote acabando)
+  const mesAtual = monthOf(hoje)
+  const pagamentoPendente = state.payments.some(p => {
+    if (p.patientId !== patient.id || p.pago) return false
+    if (monthOf(p.data) < mesAtual) return true
+    if (patient.pacote === 'avulso') return true
+    return alert !== null
+  })
   const temBadge = badgeLabel !== null || pagamentoPendente
 
   const primeiroNome = patient.nome.split(' ')[0]
