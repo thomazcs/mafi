@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useStore } from '../store/StoreContext'
 import { patientsForDate } from '../logic/schedule'
-import { weekDates, addDays, formatBR, todayISO } from '../logic/dates'
+import { weekDates, addDays, formatBR, todayISO, weekdayOf } from '../logic/dates'
 import { newId } from '../types'
 import type { AppState, Patient } from '../types'
 import { Card, Badge } from './components'
@@ -61,7 +61,7 @@ export default function ScheduleScreen() {
       ) : (
         <ul style={{ marginTop: 12 }}>
           {pacientes.map(p => (
-            <li key={p.id}>
+            <li key={`${p.id}:${selected}`}>
               <ScheduleCard patient={p} date={selected} extra={isExtra(p.id)} state={state} dispatch={dispatch} />
             </li>
           ))}
@@ -121,9 +121,19 @@ function ScheduleCard({
   }
 
   const remarcar = () => {
-    if (!novaData) return
+    if (!novaData || novaData === date) {
+      setRemarcando(false)
+      setOpen(false)
+      return
+    }
     desmarcarDia()
-    dispatch({ type: 'ADD_EXCEPTION', exception: { id: newId(), patientId: patient.id, data: novaData, tipo: 'add' } })
+    const diaNatural = patient.diasSemana.includes(weekdayOf(novaData)) && patient.dataInicio <= novaData
+    const temSkip = state.exceptions.some(
+      e => e.patientId === patient.id && e.data === novaData && e.tipo === 'skip',
+    )
+    if (!diaNatural || temSkip) {
+      dispatch({ type: 'ADD_EXCEPTION', exception: { id: newId(), patientId: patient.id, data: novaData, tipo: 'add' } })
+    }
     setRemarcando(false)
     setOpen(false)
   }
