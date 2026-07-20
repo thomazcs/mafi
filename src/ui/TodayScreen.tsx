@@ -4,7 +4,7 @@ import { patientsForDate, isDone } from '../logic/schedule'
 import { packageAlert, openCycle } from '../logic/packages'
 import { fillTemplate, waLink } from '../logic/messages'
 import { todayISO, formatBR, formatMoney, monthLabel, monthOf, weekdayOf, weekDates, addDays } from '../logic/dates'
-import { Card, Badge, CheckCircle, WaButton } from './components'
+import { Badge, Card, CheckCircle, WaButton } from './components'
 import SettingsSheet from './SettingsSheet'
 import PatientForm from './PatientForm'
 import { newId, type Patient } from '../types'
@@ -28,6 +28,7 @@ export default function TodayScreen() {
   const [selected, setSelected] = useState(hoje)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [addingExtra, setAddingExtra] = useState(false)
+  const [sheetFor, setSheetFor] = useState<Patient | null>(null)
   const [editing, setEditing] = useState<Patient | null>(null)
 
   const week = weekDates(selected)
@@ -50,6 +51,7 @@ export default function TodayScreen() {
   const goTo = (d: string) => {
     setSelected(d)
     setAddingExtra(false)
+    setSheetFor(null)
   }
 
   return (
@@ -69,6 +71,21 @@ export default function TodayScreen() {
             setEditing(null)
           }}
           onCancel={() => setEditing(null)}
+        />
+      )}
+      {sheetFor && (
+        <DaySheet
+          patient={sheetFor}
+          date={selected}
+          hoje={hoje}
+          extra={isExtra(sheetFor.id)}
+          state={state}
+          dispatch={dispatch}
+          onClose={() => setSheetFor(null)}
+          onOpenForm={() => {
+            setEditing(sheetFor)
+            setSheetFor(null)
+          }}
         />
       )}
 
@@ -119,10 +136,18 @@ export default function TodayScreen() {
       {ordenados.length === 0 ? (
         <p className="empty">{ehHoje ? 'Nenhum atendimento hoje 🌿' : 'Nenhum atendimento nesse dia 🌿'}</p>
       ) : (
-        <ul>
+        <ul className="day-list">
           {ordenados.map(p => (
             <li key={`${p.id}:${selected}`}>
-              <PatientRow patient={p} date={selected} hoje={hoje} extra={isExtra(p.id)} state={state} dispatch={dispatch} onOpen={() => setEditing(p)} />
+              <PatientRow
+                patient={p}
+                date={selected}
+                hoje={hoje}
+                extra={isExtra(p.id)}
+                state={state}
+                dispatch={dispatch}
+                onOpen={() => setSheetFor(p)}
+              />
             </li>
           ))}
         </ul>
@@ -148,6 +173,31 @@ export default function TodayScreen() {
   )
 }
 
+// regra compartilhada da linha e do sheet
+function rowInfo(state: State, patient: Patient, date: string, hoje: string) {
+  const done = isDone(state, patient.id, date)
+  const alert = packageAlert(state, patient, hoje)
+  const usadas = patient.pacote === 'dez_sessoes' ? openCycle(state, patient.id)?.sessoesUsadas ?? 0 : null
+  const badgeLabel = alert === 'renovar_dez' ? 'Renovar pacote' : alert === 'renovar_mensal' ? 'Fim do mês' : null
+  // pendência só vira badge quando é acionável: atraso de mês anterior, sessão avulsa
+  // já feita, ou dentro da janela de renovação (fim do mês / pacote acabando)
+  const mesAtual = monthOf(hoje)
+  const pagamentoPendente = state.payments.some(p => {
+    if (p.patientId !== patient.id || p.pago) return false
+    if (monthOf(p.data) < mesAtual) return true
+    if (patient.pacote === 'avulso') return true
+    return alert !== null
+  })
+  const vars = {
+    nome: patient.nome.split(' ')[0],
+    valor: formatMoney(patient.valor).replace('R$ ', ''),
+    mes: monthLabel(monthOf(hoje)),
+  }
+  const template = alert === 'renovar_dez' ? state.settings.templates.renovacaoDez : state.settings.templates.cobrancaMensal
+  const href = alert ? waLink(patient.whatsapp, fillTemplate(template, vars)) : waLink(patient.whatsapp, '')
+  return { done, alert, usadas, badgeLabel, pagamentoPendente, href }
+}
+
 function PatientRow({
   patient,
   date,
@@ -165,13 +215,9 @@ function PatientRow({
   dispatch: Dispatch
   onOpen: () => void
 }) {
-  const [menuOpen, setMenuOpen] = useState(false)
-  const [remarcando, setRemarcando] = useState(false)
-  const [novaData, setNovaData] = useState(addDays(date, 7))
-
-  const done = isDone(state, patient.id, date)
-  const alert = packageAlert(state, patient, hoje)
+  const { done, usadas, badgeLabel, pagamentoPendente, href } = rowInfo(state, patient, date, hoje)
   const checkavel = date <= hoje
+  const temBadge = badgeLabel !== null || pagamentoPendente || extra
 
   const toggle = () =>
     dispatch(
@@ -180,36 +226,54 @@ function PatientRow({
         : { type: 'CHECK_ATTENDANCE', patientId: patient.id, data: date }
     )
 
-  const usadas = patient.pacote === 'dez_sessoes' ? openCycle(state, patient.id)?.sessoesUsadas ?? 0 : null
+  return (
+    <div className={`day-row${done ? ' is-done' : ''}`}>
+      {checkavel ? (
+        <CheckCircle checked={done} onChange={toggle} label={`Presença de ${patient.nome}`} />
+      ) : (
+        <span className="day-row-dot" aria-hidden="true" />
+      )}
+      <button type="button" className="patient-open stack" onClick={onOpen} aria-label={`Abrir ${patient.nome}`}>
+        <span className="strong patient-name">{patient.nome}</span>
+        <span className="muted patient-meta">
+          {patient.cidade}
+          {usadas !== null && ` · ${usadas}/10`}
+        </span>
+        {temBadge && (
+          <span className="patient-badges">
+            {extra && <Badge kind="accent">Extra</Badge>}
+            {badgeLabel && <Badge kind="warn">{badgeLabel}</Badge>}
+            {pagamentoPendente && <Badge kind="warn">Pagamento pendente</Badge>}
+          </span>
+        )}
+      </button>
+      {patient.whatsapp && <WaButton href={href} />}
+    </div>
+  )
+}
 
-  const badgeLabel = alert === 'renovar_dez' ? 'Renovar pacote' : alert === 'renovar_mensal' ? 'Fim do mês' : null
-  // pendência só vira badge quando é acionável: atraso de mês anterior, sessão avulsa
-  // já feita, ou dentro da janela de renovação (fim do mês / pacote acabando)
-  const mesAtual = monthOf(hoje)
-  const pagamentoPendente = state.payments.some(p => {
-    if (p.patientId !== patient.id || p.pago) return false
-    if (monthOf(p.data) < mesAtual) return true
-    if (patient.pacote === 'avulso') return true
-    return alert !== null
-  })
-  const temBadge = badgeLabel !== null || pagamentoPendente || extra
-
-  const primeiroNome = patient.nome.split(' ')[0]
-  const vars = {
-    nome: primeiroNome,
-    valor: formatMoney(patient.valor).replace('R$ ', ''),
-    mes: monthLabel(monthOf(hoje)),
-  }
-  const template = alert === 'renovar_dez' ? state.settings.templates.renovacaoDez : state.settings.templates.cobrancaMensal
-  const href = alert ? waLink(patient.whatsapp, fillTemplate(template, vars)) : waLink(patient.whatsapp, '')
-
-  const podeRenovar = alert === 'renovar_dez'
-
-  const renovar = () => {
-    if (window.confirm(`Renovar o pacote de 10 sessões de ${patient.nome}?`)) {
-      dispatch({ type: 'RENEW_PACKAGE', patientId: patient.id, data: hoje })
-    }
-  }
+function DaySheet({
+  patient,
+  date,
+  hoje,
+  extra,
+  state,
+  dispatch,
+  onClose,
+  onOpenForm,
+}: {
+  patient: Patient
+  date: string
+  hoje: string
+  extra: boolean
+  state: State
+  dispatch: Dispatch
+  onClose: () => void
+  onOpenForm: () => void
+}) {
+  const [remarcando, setRemarcando] = useState(false)
+  const [novaData, setNovaData] = useState(addDays(date, 7))
+  const { alert, usadas } = rowInfo(state, patient, date, hoje)
 
   // Remove o card do dia atual: se veio de um add, remove o próprio add; senão cria skip.
   const desmarcarDia = () => {
@@ -221,19 +285,14 @@ function PatientRow({
     }
   }
 
-  const closeMenu = () => {
-    setRemarcando(false)
-    setMenuOpen(false)
-  }
-
   const cancelar = () => {
     desmarcarDia()
-    closeMenu()
+    onClose()
   }
 
   const remarcar = () => {
     if (!novaData || novaData === date) {
-      closeMenu()
+      onClose()
       return
     }
     desmarcarDia()
@@ -242,72 +301,59 @@ function PatientRow({
     if (!diaNatural || temSkip) {
       dispatch({ type: 'ADD_EXCEPTION', exception: { id: newId(), patientId: patient.id, data: novaData, tipo: 'add' } })
     }
-    closeMenu()
+    onClose()
   }
 
+  const renovar = () => {
+    if (window.confirm(`Renovar o pacote de 10 sessões de ${patient.nome}?`)) {
+      dispatch({ type: 'RENEW_PACKAGE', patientId: patient.id, data: hoje })
+      onClose()
+    }
+  }
+
+  const pacoteLabel =
+    patient.pacote === 'mensal' ? 'Mensal' : patient.pacote === 'dez_sessoes' ? `Pacote 10 sessões · ${usadas ?? 0}/10` : 'Avulso'
+
   return (
-    <Card>
-      <div className={`patient-row${done ? ' is-done' : ''}`}>
-        {checkavel && <CheckCircle checked={done} onChange={toggle} label={`Presença de ${patient.nome}`} />}
-        <button type="button" className="stack patient-info patient-open" onClick={onOpen} aria-label={`Abrir ficha de ${patient.nome}`}>
-          <span className="strong patient-name">{patient.nome}</span>
-          <span className="muted patient-meta">
-            {patient.cidade}
-            {usadas !== null && ` · ${usadas}/10 sessões`}
+    <>
+      <div className="sheet-backdrop" onClick={onClose} />
+      <div className="sheet" role="dialog" aria-label={patient.nome}>
+        <div className="sheet-handle" aria-hidden="true" />
+        <div className="sheet-header">
+          <span className="strong" style={{ fontSize: 17 }}>{patient.nome}</span>
+          <span className="muted" style={{ fontSize: 13 }}>
+            {pacoteLabel} · {formatMoney(patient.valor)}
+            {extra && ' · extra neste dia'}
           </span>
-          {temBadge && (
-            <span className="patient-badges">
-              {extra && <Badge kind="accent">Extra</Badge>}
-              {badgeLabel && <Badge kind="warn">{badgeLabel}</Badge>}
-              {pagamentoPendente && <Badge kind="warn">Pagamento pendente</Badge>}
-            </span>
-          )}
-        </button>
-        {patient.whatsapp && <WaButton href={href} />}
-        <button
-          type="button"
-          className="icon-btn"
-          aria-label={`Ações de ${patient.nome}`}
-          aria-expanded={menuOpen}
-          onClick={() => (menuOpen ? closeMenu() : setMenuOpen(true))}
-        >
-          ⋯
-        </button>
-      </div>
-
-      {menuOpen && !remarcando && (
-        <div className="card-menu">
-          {podeRenovar && (
-            <button type="button" className="btn btn-ghost" onClick={renovar}>
-              Renovar pacote
-            </button>
-          )}
-          <button type="button" className="btn btn-ghost" onClick={() => setRemarcando(true)}>
-            Remarcar
-          </button>
-          <button type="button" className="btn btn-ghost" onClick={cancelar}>
-            Cancelar só neste dia
-          </button>
         </div>
-      )}
 
-      {menuOpen && remarcando && (
-        <div className="card-menu">
-          <div>
-            <span className="field-label">Nova data</span>
+        {remarcando ? (
+          <div className="sheet-section">
+            <span className="field-label">Remarcar {formatBR(date)} para:</span>
             <input type="date" value={novaData} min={date} onChange={e => setNovaData(e.target.value)} />
+            <div className="row" style={{ marginTop: 12 }}>
+              <button type="button" className="btn btn-ghost" onClick={() => setRemarcando(false)}>
+                Voltar
+              </button>
+              <button type="button" className="btn" disabled={!novaData} onClick={remarcar}>
+                Confirmar
+              </button>
+            </div>
           </div>
-          <div className="row">
-            <button type="button" className="btn btn-ghost" onClick={() => setRemarcando(false)}>
-              Voltar
+        ) : (
+          <div className="sheet-actions">
+            {alert === 'renovar_dez' && (
+              <button type="button" onClick={renovar}>Renovar pacote</button>
+            )}
+            <button type="button" onClick={() => setRemarcando(true)}>Remarcar este atendimento</button>
+            <button type="button" onClick={cancelar}>
+              {extra ? 'Remover atendimento extra' : 'Cancelar só neste dia'}
             </button>
-            <button type="button" className="btn" disabled={!novaData} onClick={remarcar}>
-              Confirmar
-            </button>
+            <button type="button" onClick={onOpenForm}>Ver ficha completa</button>
           </div>
-        </div>
-      )}
-    </Card>
+        )}
+      </div>
+    </>
   )
 }
 
@@ -326,11 +372,9 @@ function ExtraPicker({
     return (
       <Card>
         <p className="muted">Nenhum paciente disponível para adicionar.</p>
-        <div className="card-menu">
-          <button type="button" className="btn btn-ghost" onClick={onCancel}>
-            Fechar
-          </button>
-        </div>
+        <button type="button" className="btn btn-ghost" style={{ marginTop: 12 }} onClick={onCancel}>
+          Fechar
+        </button>
       </Card>
     )
   }
