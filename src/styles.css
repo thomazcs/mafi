@@ -525,3 +525,132 @@ select {
   border-top: 1px solid var(--line);
   background: var(--bg);
 }
+
+/* ---------- agenda: navegação da semana ---------- */
+.week-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 16px 12px 8px;
+}
+
+.week-arrow {
+  flex: none;
+  width: var(--tap);
+  height: var(--tap);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 999px;
+  background: none;
+  color: var(--text);
+  font-size: 24px;
+  line-height: 1;
+}
+
+.week-arrow:active {
+  background: var(--line);
+}
+
+.week-range {
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+/* ---------- agenda: strip de dias ---------- */
+.week-strip {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+  padding: 0 16px;
+}
+
+.week-day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-height: 58px;
+  padding: 6px 0 4px;
+  border: 2px solid transparent;
+  border-radius: var(--radius);
+  background: none;
+  color: var(--text);
+  transition: background-color 120ms ease, color 120ms ease, border-color 120ms ease, transform 120ms ease;
+}
+
+.week-day:active {
+  transform: scale(0.95);
+}
+
+.week-day:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.week-day-letter {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.week-day-num {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.week-day-count {
+  min-height: 15px;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--accent);
+}
+
+.week-day.is-today {
+  border-color: var(--accent);
+}
+
+.week-day.is-selected {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.week-day.is-selected .week-day-letter,
+.week-day.is-selected .week-day-count {
+  color: #fff;
+}
+
+/* ---------- agenda: menu inline no card ---------- */
+.icon-btn {
+  flex: none;
+  width: var(--tap);
+  height: var(--tap);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 999px;
+  background: none;
+  color: var(--muted);
+  font-size: 22px;
+  line-height: 1;
+}
+
+.icon-btn:active {
+  background: var(--line);
+}
+
+.card-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}

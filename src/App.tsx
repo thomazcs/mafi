@@ -4,6 +4,7 @@ import { TabBar } from './ui/components'
 import type { Tab } from './ui/components'
 import TodayScreen from './ui/TodayScreen'
 import PatientsScreen from './ui/PatientsScreen'
+import ScheduleScreen from './ui/ScheduleScreen'
 
 function Placeholder({ title }: { title: string }) {
   return (
@@ -21,7 +22,7 @@ export default function App() {
       <main>
         {tab === 'hoje' && <TodayScreen />}
         {tab === 'pacientes' && <PatientsScreen />}
-        {tab === 'agenda' && <Placeholder title="Agenda" />}
+        {tab === 'agenda' && <ScheduleScreen />}
         {tab === 'financeiro' && <Placeholder title="Financeiro" />}
       </main>
       <TabBar tab={tab} onChange={setTab} />
