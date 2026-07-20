@@ -3,16 +3,18 @@ import { createRoot } from 'react-dom/client'
 import './styles.css'
 import App from './App.tsx'
 
-// dev-only: /?seed carrega prototypes/mafi-seed.json no localStorage (pra testar no mock)
+// fase de testes: primeiro acesso (sem dados salvos) nasce populado com o seed;
+// /?seed força repopular a qualquer momento
 async function boot() {
-  if (import.meta.env.DEV && new URLSearchParams(location.search).has('seed')) {
+  const wantsSeed = new URLSearchParams(location.search).has('seed')
+  if (wantsSeed || !localStorage.getItem('mafi-state')) {
     try {
-      const res = await fetch('/prototypes/mafi-seed.json')
+      const res = await fetch('mafi-seed.json')
       if (res.ok) localStorage.setItem('mafi-state', JSON.stringify(await res.json()))
     } catch {
       // sem seed disponível — segue com o estado atual
     }
-    history.replaceState(null, '', '/')
+    if (wantsSeed) history.replaceState(null, '', location.pathname)
   }
 
   createRoot(document.getElementById('root')!).render(
