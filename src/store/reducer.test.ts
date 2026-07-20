@@ -161,6 +161,38 @@ describe('reduce', () => {
     expect(state.payments).toHaveLength(1)
   })
 
+  it('ADD_EXCEPTION add sobre skip existente remove o skip (add vence, fica visível)', () => {
+    const p = pac()
+    let state = reduce(initialState(), { type: 'ADD_PATIENT', patient: p })
+    state = reduce(state, {
+      type: 'ADD_EXCEPTION',
+      exception: { id: newId(), patientId: p.id, data: '2026-07-20', tipo: 'skip' },
+    })
+    state = reduce(state, {
+      type: 'ADD_EXCEPTION',
+      exception: { id: newId(), patientId: p.id, data: '2026-07-20', tipo: 'add' },
+    })
+    const excOfDay = state.exceptions.filter(e => e.patientId === p.id && e.data === '2026-07-20')
+    expect(excOfDay).toHaveLength(1)
+    expect(excOfDay[0].tipo).toBe('add')
+  })
+
+  it('ADD_EXCEPTION skip sobre add existente remove o add', () => {
+    const p = pac()
+    let state = reduce(initialState(), { type: 'ADD_PATIENT', patient: p })
+    state = reduce(state, {
+      type: 'ADD_EXCEPTION',
+      exception: { id: newId(), patientId: p.id, data: '2026-07-20', tipo: 'add' },
+    })
+    state = reduce(state, {
+      type: 'ADD_EXCEPTION',
+      exception: { id: newId(), patientId: p.id, data: '2026-07-20', tipo: 'skip' },
+    })
+    const excOfDay = state.exceptions.filter(e => e.patientId === p.id && e.data === '2026-07-20')
+    expect(excOfDay).toHaveLength(1)
+    expect(excOfDay[0].tipo).toBe('skip')
+  })
+
   it('IMPORT_STATE substitui o estado inteiro', () => {
     const p = pac()
     const imported: AppState = { ...initialState(), patients: [p] }

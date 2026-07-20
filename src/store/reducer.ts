@@ -77,7 +77,11 @@ export function reduce(state: AppState, action: Action): AppState {
     }
 
     case 'ADD_EXCEPTION': {
-      return { ...state, exceptions: [...state.exceptions, action.exception] }
+      const oposto = action.exception.tipo === 'add' ? 'skip' : 'add'
+      const exceptions = state.exceptions.filter(
+        e => !(e.patientId === action.exception.patientId && e.data === action.exception.data && e.tipo === oposto)
+      )
+      return { ...state, exceptions: [...exceptions, action.exception] }
     }
 
     case 'REMOVE_EXCEPTION': {

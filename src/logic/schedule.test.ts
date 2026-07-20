@@ -41,6 +41,13 @@ describe('patientsForDate', () => {
     expect(patientsForDate(state, '2026-07-22')).toEqual([p])
   })
 
+  it('apenas add (sem skip) na mesma data: paciente aparece no dia', () => {
+    const p = pac({ diasSemana: [1] })
+    const add: ExceptionEntry = { id: newId(), patientId: p.id, data: '2026-07-20', tipo: 'add' }
+    const state: AppState = { ...initialState(), patients: [p], exceptions: [add] }
+    expect(patientsForDate(state, '2026-07-20')).toEqual([p])
+  })
+
   it('skip no dia padrão + add em outro dia: move o atendimento', () => {
     const p = pac({ diasSemana: [1] })
     const skip: ExceptionEntry = { id: newId(), patientId: p.id, data: '2026-07-20', tipo: 'skip' }

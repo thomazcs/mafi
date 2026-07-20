@@ -42,7 +42,7 @@ export default function PatientForm({
 
   const nomeOk = nome.trim().length > 0
   const diasOk = diasSemana.length > 0
-  const valido = nomeOk && diasOk
+  const valido = nomeOk && diasOk && Number(valor) > 0
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault()

@@ -17,4 +17,8 @@ describe('waLink', () => {
   it('número já com 55 (13 dígitos) não ganha outro prefixo', () => {
     expect(waLink('5531999990000', 'Oi')).toBe('https://wa.me/5531999990000?text=Oi')
   })
+
+  it('texto vazio: abre só o chat, sem ?text=', () => {
+    expect(waLink('(31) 99999-0000', '')).toBe('https://wa.me/5531999990000')
+  })
 })

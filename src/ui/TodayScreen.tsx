@@ -75,6 +75,7 @@ function PatientRow({
   const usadas = patient.pacote === 'dez_sessoes' ? openCycle(state, patient.id)?.sessoesUsadas ?? 0 : null
 
   const badgeLabel = alert === 'renovar_dez' ? 'Renovar pacote' : alert === 'renovar_mensal' ? 'Fim do mês' : null
+  const pagamentoPendente = state.payments.some(p => p.patientId === patient.id && !p.pago)
 
   const primeiroNome = patient.nome.split(' ')[0]
   const vars = {
@@ -83,7 +84,7 @@ function PatientRow({
     mes: monthLabel(monthOf(hoje)),
   }
   const template = alert === 'renovar_dez' ? state.settings.templates.renovacaoDez : state.settings.templates.cobrancaMensal
-  const href = alert ? waLink(patient.whatsapp, fillTemplate(template, vars)) : ''
+  const href = alert ? waLink(patient.whatsapp, fillTemplate(template, vars)) : waLink(patient.whatsapp, '')
 
   const podeRenovar = alert === 'renovar_dez'
 
@@ -106,12 +107,15 @@ function PatientRow({
             </span>
           </div>
         </div>
-        {badgeLabel && <Badge kind="warn">{badgeLabel}</Badge>}
+        <div className="row">
+          {badgeLabel && <Badge kind="warn">{badgeLabel}</Badge>}
+          {pagamentoPendente && <Badge kind="warn">Pagamento pendente</Badge>}
+        </div>
       </div>
 
-      {alert && (
+      {(alert || patient.whatsapp) && (
         <div className="card-actions">
-          <WaButton href={href} />
+          {patient.whatsapp && <WaButton href={href} />}
           {podeRenovar && (
             <button type="button" className="btn btn-ghost" onClick={renovar}>
               Renovar
