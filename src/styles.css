@@ -317,10 +317,23 @@ select {
   margin: 8px 0 4px;
 }
 
-.day-caption {
-  font-size: 13px;
+.day-caption-row {
   padding-top: 6px;
   padding-bottom: 10px;
+  min-height: 32px;
+}
+
+.day-caption {
+  font-size: 13px;
+}
+
+.btn-link {
+  border: none;
+  background: none;
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 6px 0 6px 12px;
 }
 
 .patient-row {

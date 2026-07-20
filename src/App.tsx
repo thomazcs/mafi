@@ -4,7 +4,6 @@ import { TabBar } from './ui/components'
 import type { Tab } from './ui/components'
 import TodayScreen from './ui/TodayScreen'
 import PatientsScreen from './ui/PatientsScreen'
-import ScheduleScreen from './ui/ScheduleScreen'
 import FinanceScreen from './ui/FinanceScreen'
 
 export default function App() {
@@ -15,7 +14,6 @@ export default function App() {
       <main>
         {tab === 'hoje' && <TodayScreen />}
         {tab === 'pacientes' && <PatientsScreen />}
-        {tab === 'agenda' && <ScheduleScreen />}
         {tab === 'financeiro' && <FinanceScreen />}
       </main>
       <TabBar tab={tab} onChange={setTab} />

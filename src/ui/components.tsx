@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 
-export type Tab = 'hoje' | 'pacientes' | 'agenda' | 'financeiro'
+export type Tab = 'hoje' | 'pacientes' | 'financeiro'
 
 export function Card({ children, onClick }: { children: ReactNode; onClick?: () => void }) {
   const clickable = typeof onClick === 'function'
@@ -97,13 +97,6 @@ const iconPeople = (
   </svg>
 )
 
-const iconCalendar = (
-  <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-    <rect x="3" y="4" width="18" height="18" rx="2" />
-    <path d="M16 2v4M8 2v4M3 10h18" />
-  </svg>
-)
-
 const iconMoney = (
   <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
     <path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
@@ -113,7 +106,6 @@ const iconMoney = (
 const TABS: TabDef[] = [
   { id: 'hoje', label: 'Hoje', icon: iconSun },
   { id: 'pacientes', label: 'Pacientes', icon: iconPeople },
-  { id: 'agenda', label: 'Agenda', icon: iconCalendar },
   { id: 'financeiro', label: 'Financeiro', icon: iconMoney },
 ]
 
