@@ -626,6 +626,53 @@ select {
   color: #fff;
 }
 
+/* ---------- financeiro: cards de resumo ---------- */
+.fin-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  padding: 10px 16px 4px;
+}
+
+.stat-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px;
+  border-radius: var(--radius);
+  border: 1px solid var(--line);
+}
+
+.stat-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.stat-value {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.stat-accent {
+  background: var(--accent-soft);
+  border-color: transparent;
+}
+
+.stat-accent .stat-value {
+  color: var(--accent);
+}
+
+.stat-warn {
+  background: var(--warn-soft);
+  border-color: transparent;
+}
+
+.stat-warn .stat-value {
+  color: var(--warn);
+}
+
 /* ---------- agenda: menu inline no card ---------- */
 .icon-btn {
   flex: none;

@@ -5,14 +5,7 @@ import type { Tab } from './ui/components'
 import TodayScreen from './ui/TodayScreen'
 import PatientsScreen from './ui/PatientsScreen'
 import ScheduleScreen from './ui/ScheduleScreen'
-
-function Placeholder({ title }: { title: string }) {
-  return (
-    <div>
-      <h1 className="screen-title">{title}</h1>
-    </div>
-  )
-}
+import FinanceScreen from './ui/FinanceScreen'
 
 export default function App() {
   const [tab, setTab] = useState<Tab>('hoje')
@@ -23,7 +16,7 @@ export default function App() {
         {tab === 'hoje' && <TodayScreen />}
         {tab === 'pacientes' && <PatientsScreen />}
         {tab === 'agenda' && <ScheduleScreen />}
-        {tab === 'financeiro' && <Placeholder title="Financeiro" />}
+        {tab === 'financeiro' && <FinanceScreen />}
       </main>
       <TabBar tab={tab} onChange={setTab} />
     </StoreProvider>
