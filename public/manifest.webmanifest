@@ -1,0 +1,3 @@
+{ "name": "MAFI", "short_name": "MAFI", "start_url": "/", "display": "standalone",
+  "background_color": "#FAFAF8", "theme_color": "#FAFAF8",
+  "icons": [{ "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml" }] }
