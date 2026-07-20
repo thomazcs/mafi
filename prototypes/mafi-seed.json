@@ -1,0 +1,59 @@
+{
+  "schemaVersion": 1,
+  "patients": [
+    { "id": "p-ana", "nome": "Ana Souza", "nascimento": "1985-03-12", "whatsapp": "31988880001", "cidade": "Belo Horizonte", "diasSemana": [1, 3], "dataInicio": "2026-05-04", "pacote": "mensal", "valor": 400, "arquivado": false },
+    { "id": "p-bruno", "nome": "Bruno Lima", "nascimento": "1978-11-02", "whatsapp": "31988880002", "cidade": "Contagem", "diasSemana": [1, 4], "dataInicio": "2026-06-01", "pacote": "dez_sessoes", "valor": 750, "arquivado": false },
+    { "id": "p-carla", "nome": "Carla Mendes", "nascimento": "1992-07-25", "whatsapp": "31988880003", "cidade": "Belo Horizonte", "diasSemana": [2], "dataInicio": "2026-06-30", "pacote": "avulso", "valor": 120, "arquivado": false },
+    { "id": "p-diego", "nome": "Diego Ferreira", "nascimento": "", "whatsapp": "31988880004", "cidade": "Betim", "diasSemana": [3, 5], "dataInicio": "2026-04-01", "pacote": "mensal", "valor": 380, "arquivado": false },
+    { "id": "p-elisa", "nome": "Elisa Prado", "nascimento": "1969-01-30", "whatsapp": "31988880005", "cidade": "Belo Horizonte", "diasSemana": [6], "dataInicio": "2026-06-20", "pacote": "dez_sessoes", "valor": 800, "arquivado": false },
+    { "id": "p-fabio", "nome": "Fábio Torres", "nascimento": "2001-09-14", "whatsapp": "31988880006", "cidade": "Nova Lima", "diasSemana": [1], "dataInicio": "2026-07-13", "pacote": "avulso", "valor": 150, "arquivado": false },
+    { "id": "p-gabi", "nome": "Gabriela Nunes", "nascimento": "1995-05-05", "whatsapp": "31988880007", "cidade": "Belo Horizonte", "diasSemana": [2, 4], "dataInicio": "2026-07-01", "pacote": "mensal", "valor": 420, "arquivado": false },
+    { "id": "p-hugo", "nome": "Hugo Almeida", "nascimento": "", "whatsapp": "31988880008", "cidade": "Sabará", "diasSemana": [5], "dataInicio": "2026-03-06", "pacote": "avulso", "valor": 130, "arquivado": true }
+  ],
+  "exceptions": [
+    { "id": "e-carla-extra", "patientId": "p-carla", "data": "2026-07-20", "tipo": "add" },
+    { "id": "e-diego-skip", "patientId": "p-diego", "data": "2026-07-22", "tipo": "skip" },
+    { "id": "e-diego-add", "patientId": "p-diego", "data": "2026-07-23", "tipo": "add" }
+  ],
+  "attendances": [
+    { "id": "a-b1", "patientId": "p-bruno", "data": "2026-06-01" },
+    { "id": "a-b2", "patientId": "p-bruno", "data": "2026-06-04" },
+    { "id": "a-b3", "patientId": "p-bruno", "data": "2026-06-08" },
+    { "id": "a-b4", "patientId": "p-bruno", "data": "2026-06-11" },
+    { "id": "a-b5", "patientId": "p-bruno", "data": "2026-06-15" },
+    { "id": "a-b6", "patientId": "p-bruno", "data": "2026-06-18" },
+    { "id": "a-b7", "patientId": "p-bruno", "data": "2026-06-22" },
+    { "id": "a-b8", "patientId": "p-bruno", "data": "2026-07-13" },
+    { "id": "a-b9", "patientId": "p-bruno", "data": "2026-07-16" },
+    { "id": "a-e1", "patientId": "p-elisa", "data": "2026-06-20" },
+    { "id": "a-e2", "patientId": "p-elisa", "data": "2026-06-27" },
+    { "id": "a-e3", "patientId": "p-elisa", "data": "2026-07-04" },
+    { "id": "a-e4", "patientId": "p-elisa", "data": "2026-07-11" },
+    { "id": "a-c1", "patientId": "p-carla", "data": "2026-07-07" },
+    { "id": "a-c2", "patientId": "p-carla", "data": "2026-07-14" },
+    { "id": "a-f1", "patientId": "p-fabio", "data": "2026-07-13" }
+  ],
+  "payments": [
+    { "id": "pay-ana-mai", "patientId": "p-ana", "ciclo": "2026-05", "data": "2026-05-01", "valor": 400, "pago": true, "dataPagamento": "2026-05-05" },
+    { "id": "pay-ana-jun", "patientId": "p-ana", "ciclo": "2026-06", "data": "2026-06-01", "valor": 400, "pago": true, "dataPagamento": "2026-06-03" },
+    { "id": "pay-ana-jul", "patientId": "p-ana", "ciclo": "2026-07", "data": "2026-07-01", "valor": 400, "pago": false },
+    { "id": "pay-bruno-pac", "patientId": "p-bruno", "ciclo": "cy-bruno-1", "data": "2026-06-01", "valor": 750, "pago": true, "dataPagamento": "2026-06-01" },
+    { "id": "pay-carla-0707", "patientId": "p-carla", "ciclo": "2026-07-07", "data": "2026-07-07", "valor": 120, "pago": true, "dataPagamento": "2026-07-07" },
+    { "id": "pay-carla-1407", "patientId": "p-carla", "ciclo": "2026-07-14", "data": "2026-07-14", "valor": 120, "pago": false },
+    { "id": "pay-diego-jul", "patientId": "p-diego", "ciclo": "2026-07", "data": "2026-07-01", "valor": 380, "pago": true, "dataPagamento": "2026-07-02" },
+    { "id": "pay-elisa-pac", "patientId": "p-elisa", "ciclo": "cy-elisa-1", "data": "2026-06-20", "valor": 800, "pago": false },
+    { "id": "pay-fabio-1307", "patientId": "p-fabio", "ciclo": "2026-07-13", "data": "2026-07-13", "valor": 150, "pago": true, "dataPagamento": "2026-07-13" },
+    { "id": "pay-gabi-jul", "patientId": "p-gabi", "ciclo": "2026-07", "data": "2026-07-01", "valor": 420, "pago": false }
+  ],
+  "cycles": [
+    { "id": "cy-bruno-1", "patientId": "p-bruno", "inicio": "2026-06-01", "sessoesUsadas": 9 },
+    { "id": "cy-elisa-1", "patientId": "p-elisa", "inicio": "2026-06-20", "sessoesUsadas": 4 }
+  ],
+  "settings": {
+    "templates": {
+      "renovacaoDez": "Oi {nome}! Seu pacote de 10 sessões está acabando. Vamos renovar? O valor é R$ {valor}. 😊",
+      "cobrancaMensal": "Oi {nome}! Passando pra lembrar do pagamento do mês de {mes}, no valor de R$ {valor}. Obrigada!",
+      "cobrancaAvulso": "Oi {nome}! Ficou pendente o pagamento da sessão, no valor de R$ {valor}. Obrigada!"
+    }
+  }
+}
