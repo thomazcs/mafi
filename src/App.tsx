@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { StoreProvider } from './store/StoreContext'
 import { TabBar } from './ui/components'
 import type { Tab } from './ui/components'
+import TodayScreen from './ui/TodayScreen'
 
 function Placeholder({ title }: { title: string }) {
   return (
@@ -17,7 +18,7 @@ export default function App() {
   return (
     <StoreProvider>
       <main>
-        {tab === 'hoje' && <Placeholder title="Hoje" />}
+        {tab === 'hoje' && <TodayScreen />}
         {tab === 'pacientes' && <Placeholder title="Pacientes" />}
         {tab === 'agenda' && <Placeholder title="Agenda" />}
         {tab === 'financeiro' && <Placeholder title="Financeiro" />}

@@ -237,6 +237,15 @@ ul {
   background: #FCFCFB;
 }
 
+.card-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+
 /* ---------- form controls ---------- */
 label.field {
   display: block;
