@@ -189,7 +189,7 @@ function ScheduleCard({
   )
 }
 
-function ExtraPicker({
+export function ExtraPicker({
   pacientes,
   onCancel,
   onPick,

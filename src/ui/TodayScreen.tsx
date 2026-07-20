@@ -6,7 +6,8 @@ import { fillTemplate, waLink } from '../logic/messages'
 import { todayISO, formatBR, formatMoney, monthLabel, monthOf, weekdayOf, weekDates } from '../logic/dates'
 import { Card, Badge, CheckCircle, WaButton } from './components'
 import SettingsSheet from './SettingsSheet'
-import type { Patient } from '../types'
+import { ExtraPicker } from './ScheduleScreen'
+import { newId, type Patient } from '../types'
 
 const WEEKDAYS = ['domingo', 'segunda-feira', 'terça-feira', 'quarta-feira', 'quinta-feira', 'sexta-feira', 'sábado']
 const LETTERS = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S']
@@ -23,6 +24,7 @@ export default function TodayScreen() {
   const hoje = todayISO()
   const [selected, setSelected] = useState(hoje)
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [addingExtra, setAddingExtra] = useState(false)
 
   const week = weekDates(hoje)
   const pacientes = patientsForDate(state, selected)
@@ -33,6 +35,10 @@ export default function TodayScreen() {
 
   const feitos = pacientes.filter(p => isDone(state, p.id, selected)).length
   const ehHoje = selected === hoje
+
+  const disponiveis = state.patients
+    .filter(p => !p.arquivado && !pacientes.some(x => x.id === p.id))
+    .sort((a, b) => a.nome.localeCompare(b.nome))
 
   return (
     <div>
@@ -54,7 +60,10 @@ export default function TodayScreen() {
               className={`week-day${d === hoje ? ' is-today' : ''}${d === selected ? ' is-selected' : ''}`}
               aria-label={`${WEEKDAYS[i]}, ${formatBR(d)}`}
               aria-pressed={d === selected}
-              onClick={() => setSelected(d)}
+              onClick={() => {
+                setSelected(d)
+                setAddingExtra(false)
+              }}
             >
               <span className="week-day-letter">{LETTERS[i]}</span>
               <span className="week-day-num">{d.slice(8, 10)}</span>
@@ -80,6 +89,23 @@ export default function TodayScreen() {
           ))}
         </ul>
       )}
+
+      <div className="pad" style={{ marginTop: 12 }}>
+        {addingExtra ? (
+          <ExtraPicker
+            pacientes={disponiveis}
+            onCancel={() => setAddingExtra(false)}
+            onPick={pid => {
+              dispatch({ type: 'ADD_EXCEPTION', exception: { id: newId(), patientId: pid, data: selected, tipo: 'add' } })
+              setAddingExtra(false)
+            }}
+          />
+        ) : (
+          <button type="button" className="btn btn-ghost" onClick={() => setAddingExtra(true)}>
+            + Atendimento extra
+          </button>
+        )}
+      </div>
     </div>
   )
 }
