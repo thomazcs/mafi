@@ -3,6 +3,7 @@ import { StoreProvider } from './store/StoreContext'
 import { TabBar } from './ui/components'
 import type { Tab } from './ui/components'
 import TodayScreen from './ui/TodayScreen'
+import PatientsScreen from './ui/PatientsScreen'
 
 function Placeholder({ title }: { title: string }) {
   return (
@@ -19,7 +20,7 @@ export default function App() {
     <StoreProvider>
       <main>
         {tab === 'hoje' && <TodayScreen />}
-        {tab === 'pacientes' && <Placeholder title="Pacientes" />}
+        {tab === 'pacientes' && <PatientsScreen />}
         {tab === 'agenda' && <Placeholder title="Agenda" />}
         {tab === 'financeiro' && <Placeholder title="Financeiro" />}
       </main>
