@@ -6,6 +6,7 @@ import { fillTemplate, waLink } from '../logic/messages'
 import { todayISO, formatBR, formatMoney, monthLabel, monthOf, weekdayOf, weekDates, addDays } from '../logic/dates'
 import { Card, Badge, CheckCircle, WaButton } from './components'
 import SettingsSheet from './SettingsSheet'
+import PatientForm from './PatientForm'
 import { newId, type Patient } from '../types'
 
 const WEEKDAYS = ['domingo', 'segunda-feira', 'terça-feira', 'quarta-feira', 'quinta-feira', 'sexta-feira', 'sábado']
@@ -27,6 +28,7 @@ export default function TodayScreen() {
   const [selected, setSelected] = useState(hoje)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [addingExtra, setAddingExtra] = useState(false)
+  const [editing, setEditing] = useState<Patient | null>(null)
 
   const week = weekDates(selected)
   const pacientes = patientsForDate(state, selected)
@@ -59,6 +61,16 @@ export default function TodayScreen() {
         </button>
       </div>
       {settingsOpen && <SettingsSheet onClose={() => setSettingsOpen(false)} />}
+      {editing && (
+        <PatientForm
+          patient={editing}
+          onSave={p => {
+            dispatch({ type: 'UPDATE_PATIENT', patient: p })
+            setEditing(null)
+          }}
+          onCancel={() => setEditing(null)}
+        />
+      )}
 
       <div className="week-nav">
         <button type="button" className="week-arrow" aria-label="Semana anterior" onClick={() => goTo(addDays(selected, -7))}>
@@ -110,7 +122,7 @@ export default function TodayScreen() {
         <ul>
           {ordenados.map(p => (
             <li key={`${p.id}:${selected}`}>
-              <PatientRow patient={p} date={selected} hoje={hoje} extra={isExtra(p.id)} state={state} dispatch={dispatch} />
+              <PatientRow patient={p} date={selected} hoje={hoje} extra={isExtra(p.id)} state={state} dispatch={dispatch} onOpen={() => setEditing(p)} />
             </li>
           ))}
         </ul>
@@ -143,6 +155,7 @@ function PatientRow({
   extra,
   state,
   dispatch,
+  onOpen,
 }: {
   patient: Patient
   date: string
@@ -150,6 +163,7 @@ function PatientRow({
   extra: boolean
   state: State
   dispatch: Dispatch
+  onOpen: () => void
 }) {
   const [menuOpen, setMenuOpen] = useState(false)
   const [remarcando, setRemarcando] = useState(false)
@@ -235,7 +249,7 @@ function PatientRow({
     <Card>
       <div className={`patient-row${done ? ' is-done' : ''}`}>
         {checkavel && <CheckCircle checked={done} onChange={toggle} label={`Presença de ${patient.nome}`} />}
-        <div className="stack patient-info">
+        <button type="button" className="stack patient-info patient-open" onClick={onOpen} aria-label={`Abrir ficha de ${patient.nome}`}>
           <span className="strong patient-name">{patient.nome}</span>
           <span className="muted patient-meta">
             {patient.cidade}
@@ -248,7 +262,7 @@ function PatientRow({
               {pagamentoPendente && <Badge kind="warn">Pagamento pendente</Badge>}
             </span>
           )}
-        </div>
+        </button>
         {patient.whatsapp && <WaButton href={href} />}
         <button
           type="button"

@@ -347,6 +347,17 @@ select {
   min-width: 0;
 }
 
+.patient-open {
+  border: none;
+  background: none;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  align-items: flex-start;
+  cursor: pointer;
+}
+
 .patient-name {
   transition: color 120ms ease;
 }
