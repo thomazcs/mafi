@@ -67,7 +67,7 @@ ul {
 
 /* ---------- tipografia utilitária ---------- */
 .screen-title {
-  padding: 20px 16px 8px;
+  padding: calc(40px + env(safe-area-inset-top, 0px)) 16px 8px;
   font-size: 22px;
   font-weight: 700;
   letter-spacing: -0.01em;
@@ -299,6 +299,60 @@ select {
   background-repeat: no-repeat;
   background-position: right 12px center;
   padding-right: 36px;
+}
+
+/* ---------- home (Hoje) ---------- */
+.screen-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.screen-header .icon-btn {
+  margin-bottom: 4px;
+}
+
+.home-strip {
+  margin: 8px 0 4px;
+}
+
+.day-caption {
+  font-size: 13px;
+  padding-top: 6px;
+  padding-bottom: 10px;
+}
+
+.patient-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.patient-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.patient-name {
+  transition: color 120ms ease;
+}
+
+.patient-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.patient-row.is-done .patient-name {
+  text-decoration: line-through;
+  color: var(--muted);
+}
+
+.patient-row.is-done .patient-meta,
+.patient-row.is-done .patient-badges {
+  opacity: 0.55;
 }
 
 /* ---------- layout helpers ---------- */

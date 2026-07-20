@@ -3,12 +3,13 @@ import { useStore } from '../store/StoreContext'
 import { patientsForDate, isDone } from '../logic/schedule'
 import { packageAlert, openCycle } from '../logic/packages'
 import { fillTemplate, waLink } from '../logic/messages'
-import { todayISO, formatBR, formatMoney, monthLabel, monthOf, weekdayOf } from '../logic/dates'
+import { todayISO, formatBR, formatMoney, monthLabel, monthOf, weekdayOf, weekDates } from '../logic/dates'
 import { Card, Badge, CheckCircle, WaButton } from './components'
 import SettingsSheet from './SettingsSheet'
 import type { Patient } from '../types'
 
 const WEEKDAYS = ['domingo', 'segunda-feira', 'terça-feira', 'quarta-feira', 'quinta-feira', 'sexta-feira', 'sábado']
+const LETTERS = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S']
 
 const iconGear = (
   <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -20,29 +21,61 @@ const iconGear = (
 export default function TodayScreen() {
   const { state, dispatch } = useStore()
   const hoje = todayISO()
-  const pacientes = patientsForDate(state, hoje)
+  const [selected, setSelected] = useState(hoje)
   const [settingsOpen, setSettingsOpen] = useState(false)
+
+  const week = weekDates(hoje)
+  const pacientes = patientsForDate(state, selected)
+  // pendentes primeiro (já em ordem de nome), atendidos afundam pro fim
+  const ordenados = [...pacientes].sort(
+    (a, b) => Number(isDone(state, a.id, selected)) - Number(isDone(state, b.id, selected))
+  )
+
+  const feitos = pacientes.filter(p => isDone(state, p.id, selected)).length
+  const ehHoje = selected === hoje
 
   return (
     <div>
-      <div className="row-between" style={{ paddingRight: 8 }}>
+      <div className="screen-header" style={{ paddingRight: 8 }}>
         <h1 className="screen-title">Hoje</h1>
         <button type="button" className="icon-btn" aria-label="Configurações" onClick={() => setSettingsOpen(true)}>
           {iconGear}
         </button>
       </div>
       {settingsOpen && <SettingsSheet onClose={() => setSettingsOpen(false)} />}
-      <p className="pad muted">
-        {WEEKDAYS[weekdayOf(hoje)]}, {formatBR(hoje)}
+
+      <div className="week-strip home-strip">
+        {week.map((d, i) => {
+          const count = patientsForDate(state, d).length
+          return (
+            <button
+              key={d}
+              type="button"
+              className={`week-day${d === hoje ? ' is-today' : ''}${d === selected ? ' is-selected' : ''}`}
+              aria-label={`${WEEKDAYS[i]}, ${formatBR(d)}`}
+              aria-pressed={d === selected}
+              onClick={() => setSelected(d)}
+            >
+              <span className="week-day-letter">{LETTERS[i]}</span>
+              <span className="week-day-num">{d.slice(8, 10)}</span>
+              <span className="week-day-count">{count > 0 ? count : ''}</span>
+            </button>
+          )
+        })}
+      </div>
+
+      <p className="pad muted day-caption">
+        {ehHoje ? 'hoje' : WEEKDAYS[weekdayOf(selected)]}, {formatBR(selected)}
+        {pacientes.length > 0 && ` · ${feitos}/${pacientes.length} atendidos`}
       </p>
 
-      {pacientes.length === 0 ? (
-        <p className="empty">Nenhum atendimento hoje 🌿</p>
+      {ordenados.length === 0 ? (
+        <p className="empty">{ehHoje ? 'Nenhum atendimento hoje 🌿' : 'Nenhum atendimento nesse dia 🌿'}</p>
       ) : (
-        <ul style={{ marginTop: 12 }}>
-          {pacientes.map(p => (
+        <ul>
+          {ordenados.map(p => (
             <li key={p.id}>
-              <PatientRow patient={p} hoje={hoje} state={state} dispatch={dispatch} />
+              <PatientRow patient={p} date={selected} hoje={hoje} state={state} dispatch={dispatch} />
             </li>
           ))}
         </ul>
@@ -53,29 +86,33 @@ export default function TodayScreen() {
 
 function PatientRow({
   patient,
+  date,
   hoje,
   state,
   dispatch,
 }: {
   patient: Patient
+  date: string
   hoje: string
   state: ReturnType<typeof useStore>['state']
   dispatch: ReturnType<typeof useStore>['dispatch']
 }) {
-  const done = isDone(state, patient.id, hoje)
+  const done = isDone(state, patient.id, date)
   const alert = packageAlert(state, patient, hoje)
+  const checkavel = date <= hoje
 
   const toggle = () =>
     dispatch(
       done
-        ? { type: 'UNCHECK_ATTENDANCE', patientId: patient.id, data: hoje }
-        : { type: 'CHECK_ATTENDANCE', patientId: patient.id, data: hoje }
+        ? { type: 'UNCHECK_ATTENDANCE', patientId: patient.id, data: date }
+        : { type: 'CHECK_ATTENDANCE', patientId: patient.id, data: date }
     )
 
   const usadas = patient.pacote === 'dez_sessoes' ? openCycle(state, patient.id)?.sessoesUsadas ?? 0 : null
 
   const badgeLabel = alert === 'renovar_dez' ? 'Renovar pacote' : alert === 'renovar_mensal' ? 'Fim do mês' : null
   const pagamentoPendente = state.payments.some(p => p.patientId === patient.id && !p.pago)
+  const temBadge = badgeLabel !== null || pagamentoPendente
 
   const primeiroNome = patient.nome.split(' ')[0]
   const vars = {
@@ -96,31 +133,29 @@ function PatientRow({
 
   return (
     <Card>
-      <div className="row-between">
-        <div className="row">
-          <CheckCircle checked={done} onChange={toggle} label={`Presença de ${patient.nome}`} />
-          <div className="stack">
-            <span className="strong">{patient.nome}</span>
-            <span className="muted">
-              {patient.cidade}
-              {usadas !== null && ` · ${usadas}/10 sessões`}
+      <div className={`patient-row${done ? ' is-done' : ''}`}>
+        {checkavel && <CheckCircle checked={done} onChange={toggle} label={`Presença de ${patient.nome}`} />}
+        <div className="stack patient-info">
+          <span className="strong patient-name">{patient.nome}</span>
+          <span className="muted patient-meta">
+            {patient.cidade}
+            {usadas !== null && ` · ${usadas}/10 sessões`}
+          </span>
+          {temBadge && (
+            <span className="patient-badges">
+              {badgeLabel && <Badge kind="warn">{badgeLabel}</Badge>}
+              {pagamentoPendente && <Badge kind="warn">Pagamento pendente</Badge>}
             </span>
-          </div>
+          )}
         </div>
-        <div className="row">
-          {badgeLabel && <Badge kind="warn">{badgeLabel}</Badge>}
-          {pagamentoPendente && <Badge kind="warn">Pagamento pendente</Badge>}
-        </div>
+        {patient.whatsapp && <WaButton href={href} />}
       </div>
 
-      {(alert || patient.whatsapp) && (
+      {podeRenovar && (
         <div className="card-actions">
-          {patient.whatsapp && <WaButton href={href} />}
-          {podeRenovar && (
-            <button type="button" className="btn btn-ghost" onClick={renovar}>
-              Renovar
-            </button>
-          )}
+          <button type="button" className="btn btn-ghost" onClick={renovar}>
+            Renovar
+          </button>
         </div>
       )}
     </Card>
