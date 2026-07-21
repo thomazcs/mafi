@@ -83,6 +83,7 @@ ul {
 .overlay-back:focus-visible,
 .wa-button:focus-visible,
 .patient-open:focus-visible,
+.section-toggle:focus-visible,
 .sheet-actions button:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
@@ -253,15 +254,6 @@ ul {
 
 .btn-ghost:active {
   background: #FCFCFB;
-}
-
-.card-actions {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-top: 12px;
-  padding-top: 12px;
-  border-top: 1px solid var(--line);
 }
 
 /* ---------- form controls ---------- */
@@ -545,13 +537,6 @@ input[aria-invalid='true'] {
   border-radius: 999px;
 }
 
-.btn-inline {
-  width: auto;
-  min-height: var(--tap);
-  padding: 0 16px;
-  flex: none;
-}
-
 .btn-danger {
   border-color: #B3423A;
   background: #B3423A;
@@ -629,7 +614,7 @@ input[aria-invalid='true'] {
   display: flex;
   align-items: center;
   gap: 4px;
-  padding: 8px 12px;
+  padding: calc(8px + env(safe-area-inset-top, 0px)) 12px 8px;
   border-bottom: 1px solid var(--line);
   background: var(--bg);
 }
@@ -929,15 +914,6 @@ input[aria-invalid='true'] {
 
 .icon-btn:active {
   background: var(--line);
-}
-
-.card-menu {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin-top: 12px;
-  padding-top: 12px;
-  border-top: 1px solid var(--line);
 }
 
 /* ---------- bottom sheet ---------- */

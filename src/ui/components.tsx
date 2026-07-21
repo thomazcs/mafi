@@ -96,6 +96,33 @@ export function WaButton({ href }: { href: string }) {
   )
 }
 
+/* ---------- pilha de diálogos (Esc fecha só o do topo) ---------- */
+const dialogStack: symbol[] = []
+
+export function useEscClose(onClose: () => void) {
+  const idRef = useRef<symbol | undefined>(undefined)
+  if (idRef.current === undefined) idRef.current = Symbol('dialog')
+
+  useEffect(() => {
+    const id = idRef.current!
+    dialogStack.push(id)
+    return () => {
+      const i = dialogStack.indexOf(id)
+      if (i !== -1) dialogStack.splice(i, 1)
+    }
+  }, [])
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return
+      if (dialogStack[dialogStack.length - 1] !== idRef.current) return
+      onClose()
+    }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [onClose])
+}
+
 /* ---------- bottom sheet genérico ---------- */
 export function Sheet({ title, onClose, children }: { title?: string; onClose: () => void; children: ReactNode }) {
   const panelRef = useRef<HTMLDivElement>(null)
@@ -104,13 +131,7 @@ export function Sheet({ title, onClose, children }: { title?: string; onClose: (
     panelRef.current?.focus()
   }, [])
 
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
-    }
-    document.addEventListener('keydown', onKey)
-    return () => document.removeEventListener('keydown', onKey)
-  }, [onClose])
+  useEscClose(onClose)
 
   return (
     <>

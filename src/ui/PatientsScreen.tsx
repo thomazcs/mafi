@@ -3,7 +3,7 @@ import { useStore } from '../store/StoreContext'
 import { openCycle } from '../logic/packages'
 import { formatMoney } from '../logic/dates'
 import { waLink } from '../logic/messages'
-import { Badge, ConfirmSheet, Sheet, useToast } from './components'
+import { Badge, Chevron, ConfirmSheet, Sheet, useToast } from './components'
 import PatientForm from './PatientForm'
 import type { Patient } from '../types'
 
@@ -128,20 +128,9 @@ export default function PatientsScreen() {
             onClick={() => setArquivadosAberto(v => !v)}
           >
             Arquivados ({arquivados.length})
-            <svg
-              viewBox="0 0 24 24"
-              width="18"
-              height="18"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden="true"
-              style={{ transform: arquivadosAberto ? 'rotate(180deg)' : 'none', transition: 'transform 120ms ease' }}
-            >
-              <path d="M6 9l6 6 6-6" />
-            </svg>
+            <span style={{ display: 'inline-flex', transform: arquivadosAberto ? 'rotate(180deg)' : 'none', transition: 'transform 120ms ease' }}>
+              <Chevron dir="down" />
+            </span>
           </button>
           {arquivadosAberto && (
             <ul className="list">

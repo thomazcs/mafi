@@ -3,7 +3,7 @@ import { useStore } from '../store/StoreContext'
 import { exportJSON, parseImport } from '../store/persist'
 import { fillTemplate } from '../logic/messages'
 import { formatBR, monthLabel, monthOf, todayISO } from '../logic/dates'
-import { Chevron, ConfirmSheet, useToast } from './components'
+import { Chevron, ConfirmSheet, useEscClose, useToast } from './components'
 import type { AppState } from '../types'
 
 const LAST_BACKUP_KEY = 'mafi-last-backup'
@@ -35,6 +35,8 @@ export default function SettingsSheet({ onClose }: { onClose: () => void }) {
     if (dirty) setConfirmClose(true)
     else onClose()
   }
+
+  useEscClose(voltar)
 
   const exportar = () => {
     exportJSON(state)

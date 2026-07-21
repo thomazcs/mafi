@@ -2,6 +2,7 @@ import { useState } from 'react'
 import type { Patient, Pacote } from '../types'
 import { newId } from '../types'
 import { todayISO } from '../logic/dates'
+import { Chevron, useEscClose } from './components'
 
 const CHIPS = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'] // 0=dom … 6=sáb
 
@@ -38,6 +39,8 @@ export default function PatientForm({
 
   const editando = !!patient
 
+  useEscClose(onCancel)
+
   const toggleDia = (d: number) =>
     setDiasSemana(prev => (prev.includes(d) ? prev.filter(x => x !== d) : [...prev, d].sort((a, b) => a - b)))
 
@@ -71,9 +74,7 @@ export default function PatientForm({
     <div className="overlay">
       <header className="overlay-header">
         <button type="button" className="overlay-back" onClick={onCancel} aria-label="Voltar">
-          <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <path d="M15 18l-6-6 6-6" />
-          </svg>
+          <Chevron dir="left" />
         </button>
         <h1 className="overlay-title">{editando ? 'Editar paciente' : 'Novo paciente'}</h1>
       </header>
