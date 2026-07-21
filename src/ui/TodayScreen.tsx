@@ -4,10 +4,10 @@ import { patientsForDate, isDone } from '../logic/schedule'
 import { packageAlert, openCycle } from '../logic/packages'
 import { fillTemplate, waLink } from '../logic/messages'
 import { todayISO, formatBR, formatMoney, monthLabel, monthOf, weekdayOf, weekDates, addDays } from '../logic/dates'
-import { Badge, Card, CheckCircle, Chevron, Sheet, WaButton } from './components'
+import { Badge, Card, CheckCircle, Chevron, ConfirmSheet, Sheet, WaButton, useToast, withViewTransition } from './components'
 import SettingsSheet from './SettingsSheet'
 import PatientForm from './PatientForm'
-import { newId, type Patient } from '../types'
+import { newId, type Patient, type ExceptionEntry } from '../types'
 
 const WEEKDAYS = ['domingo', 'segunda-feira', 'terça-feira', 'quarta-feira', 'quinta-feira', 'sexta-feira', 'sábado']
 const LETTERS = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S']
@@ -24,6 +24,7 @@ const iconGear = (
 
 export default function TodayScreen() {
   const { state, dispatch } = useStore()
+  const toast = useToast()
   const hoje = todayISO()
   const [selected, setSelected] = useState(hoje)
   const [settingsOpen, setSettingsOpen] = useState(false)
@@ -40,6 +41,14 @@ export default function TodayScreen() {
 
   const feitos = pacientes.filter(p => isDone(state, p.id, selected)).length
   const ehHoje = selected === hoje
+
+  // dia passado com pelo menos uma presença ainda não marcada
+  const hasPending = (d: string) => {
+    if (d >= hoje) return false
+    const ps = patientsForDate(state, d)
+    return ps.length > 0 && ps.filter(p => isDone(state, p.id, d)).length < ps.length
+  }
+  const semanaTemPendencia = week.some(hasPending)
 
   const isExtra = (patientId: string) =>
     state.exceptions.some(e => e.patientId === patientId && e.data === selected && e.tipo === 'add')
@@ -104,18 +113,21 @@ export default function TodayScreen() {
       <div className="week-strip home-strip">
         {week.map((d, i) => {
           const count = patientsForDate(state, d).length
+          const pendente = hasPending(d)
+          const countLabel = count === 0 ? 'sem atendimentos' : count === 1 ? '1 atendimento' : `${count} atendimentos`
           return (
             <button
               key={d}
               type="button"
               className={`week-day${d === hoje ? ' is-today' : ''}${d === selected ? ' is-selected' : ''}`}
-              aria-label={`${WEEKDAYS[i]}, ${formatBR(d)}`}
+              aria-label={`${WEEKDAYS[i]}, ${formatBR(d)}, ${countLabel}`}
               aria-pressed={d === selected}
               onClick={() => goTo(d)}
             >
               <span className="week-day-letter">{LETTERS[i]}</span>
               <span className="week-day-num">{d.slice(8, 10)}</span>
               <span className="week-day-count">{count > 0 ? count : ''}</span>
+              {pendente && <span className="week-day-alert" aria-hidden="true" />}
             </button>
           )
         })}
@@ -125,6 +137,7 @@ export default function TodayScreen() {
         <p className="muted day-caption">
           {ehHoje ? 'hoje' : WEEKDAYS[weekdayOf(selected)]}, {formatBR(selected)}
           {pacientes.length > 0 && ` · ${feitos}/${pacientes.length} atendidos`}
+          {semanaTemPendencia && <span className="caption-alert"> · presenças pendentes</span>}
         </p>
         {!ehHoje && (
           <button type="button" className="btn-link" onClick={() => goTo(hoje)}>
@@ -138,7 +151,7 @@ export default function TodayScreen() {
       ) : (
         <ul className="list">
           {ordenados.map(p => (
-            <li key={`${p.id}:${selected}`}>
+            <li key={`${p.id}:${selected}`} style={{ viewTransitionName: `row-${p.id}` }}>
               <PatientRow
                 patient={p}
                 date={selected}
@@ -160,6 +173,7 @@ export default function TodayScreen() {
             onCancel={() => setAddingExtra(false)}
             onPick={pid => {
               dispatch({ type: 'ADD_EXCEPTION', exception: { id: newId(), patientId: pid, data: selected, tipo: 'add' } })
+              toast('Encaixe adicionado')
               setAddingExtra(false)
             }}
           />
@@ -178,7 +192,7 @@ function rowInfo(state: State, patient: Patient, date: string, hoje: string) {
   const done = isDone(state, patient.id, date)
   const alert = packageAlert(state, patient, hoje)
   const usadas = patient.pacote === 'dez_sessoes' ? openCycle(state, patient.id)?.sessoesUsadas ?? 0 : null
-  const badgeLabel = alert === 'renovar_dez' ? 'Renovar pacote' : alert === 'renovar_mensal' ? 'Fim do mês' : null
+  const badgeLabel = alert === 'renovar_dez' ? 'Renovar pacote' : alert === 'renovar_mensal' ? 'Cobrar mensalidade' : null
   // pendência só vira badge quando é acionável: atraso de mês anterior, sessão avulsa
   // já feita, ou dentro da janela de renovação (fim do mês / pacote acabando)
   const mesAtual = monthOf(hoje)
@@ -220,10 +234,12 @@ function PatientRow({
   const temBadge = badgeLabel !== null || pagamentoPendente || extra
 
   const toggle = () =>
-    dispatch(
-      done
-        ? { type: 'UNCHECK_ATTENDANCE', patientId: patient.id, data: date }
-        : { type: 'CHECK_ATTENDANCE', patientId: patient.id, data: date }
+    withViewTransition(() =>
+      dispatch(
+        done
+          ? { type: 'UNCHECK_ATTENDANCE', patientId: patient.id, data: date }
+          : { type: 'CHECK_ATTENDANCE', patientId: patient.id, data: date }
+      )
     )
 
   return (
@@ -233,7 +249,7 @@ function PatientRow({
       ) : (
         <span className="list-row-dot" aria-hidden="true" />
       )}
-      <button type="button" className="patient-open stack" onClick={onOpen} aria-label={`Abrir ${patient.nome}`}>
+      <button type="button" className="patient-open stack" onClick={onOpen}>
         <span className="strong patient-name">{patient.nome}</span>
         <span className="muted patient-meta">
           {patient.cidade}
@@ -271,22 +287,32 @@ function DaySheet({
   onClose: () => void
   onOpenForm: () => void
 }) {
+  const toast = useToast()
   const [remarcando, setRemarcando] = useState(false)
+  const [confirmandoRenova, setConfirmandoRenova] = useState(false)
   const [novaData, setNovaData] = useState(addDays(date, 7))
-  const { alert, usadas } = rowInfo(state, patient, date, hoje)
+  const { alert, usadas, href } = rowInfo(state, patient, date, hoje)
+  const primeiroNome = patient.nome.split(' ')[0]
 
-  // Remove o card do dia atual: se veio de um add, remove o próprio add; senão cria skip.
-  const desmarcarDia = () => {
+  // Remove o card do dia atual e devolve a função de desfazer:
+  // se veio de um add, remove o próprio add (desfazer recria); senão cria skip (desfazer remove).
+  const desmarcarDia = (): (() => void) => {
     if (extra) {
       const ex = state.exceptions.find(e => e.patientId === patient.id && e.data === date && e.tipo === 'add')
-      if (ex) dispatch({ type: 'REMOVE_EXCEPTION', id: ex.id })
-    } else {
-      dispatch({ type: 'ADD_EXCEPTION', exception: { id: newId(), patientId: patient.id, data: date, tipo: 'skip' } })
+      if (ex) {
+        dispatch({ type: 'REMOVE_EXCEPTION', id: ex.id })
+        return () => dispatch({ type: 'ADD_EXCEPTION', exception: ex })
+      }
+      return () => {}
     }
+    const skip: ExceptionEntry = { id: newId(), patientId: patient.id, data: date, tipo: 'skip' }
+    dispatch({ type: 'ADD_EXCEPTION', exception: skip })
+    return () => dispatch({ type: 'REMOVE_EXCEPTION', id: skip.id })
   }
 
   const cancelar = () => {
-    desmarcarDia()
+    const desfazer = desmarcarDia()
+    toast(`${primeiroNome} removido de ${formatBR(date)}`, { action: { label: 'Desfazer', onClick: desfazer } })
     onClose()
   }
 
@@ -295,60 +321,88 @@ function DaySheet({
       onClose()
       return
     }
-    desmarcarDia()
+    const desfazerDesmarca = desmarcarDia()
     const diaNatural = patient.diasSemana.includes(weekdayOf(novaData)) && patient.dataInicio <= novaData
-    const temSkip = state.exceptions.some(e => e.patientId === patient.id && e.data === novaData && e.tipo === 'skip')
-    if (!diaNatural || temSkip) {
-      dispatch({ type: 'ADD_EXCEPTION', exception: { id: newId(), patientId: patient.id, data: novaData, tipo: 'add' } })
+    const skipNaNova = state.exceptions.find(e => e.patientId === patient.id && e.data === novaData && e.tipo === 'skip')
+    let addNova: ExceptionEntry | null = null
+    if (!diaNatural || skipNaNova) {
+      addNova = { id: newId(), patientId: patient.id, data: novaData, tipo: 'add' }
+      dispatch({ type: 'ADD_EXCEPTION', exception: addNova })
     }
+    toast(`${primeiroNome} remarcado para ${formatBR(novaData)}`, {
+      action: {
+        label: 'Desfazer',
+        onClick: () => {
+          desfazerDesmarca()
+          if (addNova) dispatch({ type: 'REMOVE_EXCEPTION', id: addNova.id })
+          if (skipNaNova) dispatch({ type: 'ADD_EXCEPTION', exception: skipNaNova })
+        },
+      },
+    })
     onClose()
   }
 
-  const renovar = () => {
-    if (window.confirm(`Renovar o pacote de 10 sessões de ${patient.nome}?`)) {
-      dispatch({ type: 'RENEW_PACKAGE', patientId: patient.id, data: hoje })
-      onClose()
-    }
+  const doRenovar = () => {
+    dispatch({ type: 'RENEW_PACKAGE', patientId: patient.id, data: hoje })
+    toast(
+      'Pacote renovado — cobrança criada',
+      patient.whatsapp
+        ? { action: { label: 'Cobrar no WhatsApp', onClick: () => window.open(href, '_blank', 'noopener,noreferrer') } }
+        : undefined
+    )
+    setConfirmandoRenova(false)
+    onClose()
   }
 
   const pacoteLabel =
     patient.pacote === 'mensal' ? 'Mensal' : patient.pacote === 'dez_sessoes' ? `Pacote 10 sessões · ${usadas ?? 0}/10` : 'Avulso'
 
   return (
-    <Sheet title={patient.nome} onClose={onClose}>
-      <div className="sheet-header">
-        <span className="muted" style={{ fontSize: 13 }}>
-          {pacoteLabel} · {formatMoney(patient.valor)}
-          {extra && ' · extra neste dia'}
-        </span>
-      </div>
+    <>
+      <Sheet title={patient.nome} onClose={onClose}>
+        <div className="sheet-header">
+          <span className="muted" style={{ fontSize: 13 }}>
+            {pacoteLabel} · {formatMoney(patient.valor)}
+            {extra && ' · extra neste dia'}
+          </span>
+        </div>
 
-      {remarcando ? (
-        <div className="sheet-section">
-          <span className="field-label">Remarcar {formatBR(date)} para:</span>
-          <input type="date" value={novaData} min={date} onChange={e => setNovaData(e.target.value)} />
-          <div className="row" style={{ marginTop: 12 }}>
-            <button type="button" className="btn btn-ghost" onClick={() => setRemarcando(false)}>
-              Voltar
-            </button>
-            <button type="button" className="btn" disabled={!novaData} onClick={remarcar}>
-              Confirmar
-            </button>
+        {remarcando ? (
+          <div className="sheet-section">
+            <span className="field-label">Remarcar {formatBR(date)} para:</span>
+            <input type="date" value={novaData} min={date} onChange={e => setNovaData(e.target.value)} />
+            <div className="row" style={{ marginTop: 12 }}>
+              <button type="button" className="btn btn-ghost" onClick={() => setRemarcando(false)}>
+                Voltar
+              </button>
+              <button type="button" className="btn" disabled={!novaData || novaData === date} onClick={remarcar}>
+                Confirmar
+              </button>
+            </div>
           </div>
-        </div>
-      ) : (
-        <div className="sheet-actions">
-          {alert === 'renovar_dez' && (
-            <button type="button" onClick={renovar}>Renovar pacote</button>
-          )}
-          <button type="button" onClick={() => setRemarcando(true)}>Remarcar este atendimento</button>
-          <button type="button" onClick={cancelar}>
-            {extra ? 'Remover atendimento extra' : 'Cancelar só neste dia'}
-          </button>
-          <button type="button" onClick={onOpenForm}>Ver ficha completa</button>
-        </div>
+        ) : (
+          <div className="sheet-actions">
+            {alert === 'renovar_dez' && (
+              <button type="button" onClick={() => setConfirmandoRenova(true)}>Renovar pacote</button>
+            )}
+            <button type="button" onClick={() => setRemarcando(true)}>Remarcar este atendimento</button>
+            <button type="button" onClick={cancelar}>
+              {extra ? 'Remover atendimento extra' : 'Cancelar só neste dia'}
+            </button>
+            <button type="button" onClick={onOpenForm}>Ver ficha completa</button>
+          </div>
+        )}
+      </Sheet>
+      {confirmandoRenova && (
+        <ConfirmSheet
+          title="Renovar pacote"
+          message={`Renovar o pacote de 10 sessões de ${patient.nome}? Uma nova cobrança será criada.`}
+          confirmLabel="Renovar"
+          onConfirm={doRenovar}
+          onCancel={() => setConfirmandoRenova(false)}
+        />
       )}
-    </Sheet>
+    </>
   )
 }
 

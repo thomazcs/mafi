@@ -351,6 +351,10 @@ select {
   font-size: var(--fs-sm);
 }
 
+.caption-alert {
+  color: var(--warn);
+}
+
 .btn-link {
   display: inline-flex;
   align-items: center;
@@ -707,6 +711,7 @@ select {
 }
 
 .week-day {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -747,6 +752,18 @@ select {
   font-weight: 700;
   line-height: 1;
   color: var(--accent);
+}
+
+/* dia passado com presença não marcada */
+.week-day-alert {
+  position: absolute;
+  left: 50%;
+  bottom: 2px;
+  transform: translateX(-50%);
+  width: 4px;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--warn);
 }
 
 .week-day.is-today {
