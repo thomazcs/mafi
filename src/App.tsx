@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { StoreProvider } from './store/StoreContext'
-import { TabBar } from './ui/components'
+import { TabBar, ToastProvider } from './ui/components'
 import type { Tab } from './ui/components'
 import TodayScreen from './ui/TodayScreen'
 import PatientsScreen from './ui/PatientsScreen'
@@ -11,12 +11,14 @@ export default function App() {
 
   return (
     <StoreProvider>
-      <main>
-        {tab === 'hoje' && <TodayScreen />}
-        {tab === 'pacientes' && <PatientsScreen />}
-        {tab === 'financeiro' && <FinanceScreen />}
-      </main>
-      <TabBar tab={tab} onChange={setTab} />
+      <ToastProvider>
+        <main>
+          {tab === 'hoje' && <TodayScreen />}
+          {tab === 'pacientes' && <PatientsScreen />}
+          {tab === 'financeiro' && <FinanceScreen />}
+        </main>
+        <TabBar tab={tab} onChange={setTab} />
+      </ToastProvider>
     </StoreProvider>
   )
 }

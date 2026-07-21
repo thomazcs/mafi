@@ -1,3 +1,4 @@
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 
 export type Tab = 'hoje' | 'pacientes' | 'financeiro'
@@ -27,8 +28,27 @@ export function Card({ children, onClick }: { children: ReactNode; onClick?: () 
   )
 }
 
-export function Badge({ kind, children }: { kind: 'warn' | 'ok' | 'accent'; children: ReactNode }) {
+export function Badge({ kind, children }: { kind: 'warn' | 'accent'; children: ReactNode }) {
   return <span className={`badge badge-${kind}`}>{children}</span>
+}
+
+export function Chevron({ dir }: { dir: 'left' | 'right' | 'down' }) {
+  const d = dir === 'left' ? 'M15 18l-6-6 6-6' : dir === 'right' ? 'M9 18l6-6-6-6' : 'M6 9l6 6 6-6'
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      width="24"
+      height="24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d={d} />
+    </svg>
+  )
 }
 
 export function CheckCircle({ checked, onChange, label }: { checked: boolean; onChange: () => void; label?: string }) {
@@ -49,7 +69,7 @@ export function CheckCircle({ checked, onChange, label }: { checked: boolean; on
             d="M5 12.5l4 4 10-10"
             fill="none"
             stroke="currentColor"
-            strokeWidth="2.5"
+            strokeWidth="2"
             strokeLinecap="round"
             strokeLinejoin="round"
           />
@@ -74,6 +94,150 @@ export function WaButton({ href }: { href: string }) {
       </svg>
     </a>
   )
+}
+
+/* ---------- bottom sheet genérico ---------- */
+export function Sheet({ title, onClose, children }: { title?: string; onClose: () => void; children: ReactNode }) {
+  const panelRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    panelRef.current?.focus()
+  }, [])
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+    }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [onClose])
+
+  return (
+    <>
+      <div className="sheet-backdrop" onClick={onClose} />
+      <div className="sheet" role="dialog" aria-modal="true" aria-label={title} tabIndex={-1} ref={panelRef}>
+        <button type="button" className="icon-btn sheet-close" aria-label="Fechar" onClick={onClose}>
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M18 6L6 18M6 6l12 12" />
+          </svg>
+        </button>
+        <div className="sheet-handle" aria-hidden="true" />
+        {title && <h2 className="sheet-title">{title}</h2>}
+        {children}
+      </div>
+    </>
+  )
+}
+
+export function ConfirmSheet({
+  title,
+  message,
+  confirmLabel,
+  danger,
+  onConfirm,
+  onCancel,
+}: {
+  title: string
+  message: string
+  confirmLabel: string
+  danger?: boolean
+  onConfirm: () => void
+  onCancel: () => void
+}) {
+  return (
+    <Sheet title={title} onClose={onCancel}>
+      <p className="sheet-message">{message}</p>
+      <div className="row sheet-confirm-actions">
+        <button type="button" className="btn btn-ghost" onClick={onCancel}>
+          Cancelar
+        </button>
+        <button type="button" className={danger ? 'btn btn-danger' : 'btn'} onClick={onConfirm}>
+          {confirmLabel}
+        </button>
+      </div>
+    </Sheet>
+  )
+}
+
+/* ---------- toast ---------- */
+interface ToastAction {
+  label: string
+  onClick: () => void
+}
+interface ToastOptions {
+  action?: ToastAction
+}
+type ToastFn = (message: string, opts?: ToastOptions) => void
+
+const ToastContext = createContext<ToastFn | null>(null)
+
+export function useToast(): ToastFn {
+  const ctx = useContext(ToastContext)
+  if (!ctx) throw new Error('useToast precisa de <ToastProvider>')
+  return ctx
+}
+
+interface ToastState {
+  id: number
+  message: string
+  action?: ToastAction
+}
+
+export function ToastProvider({ children }: { children: ReactNode }) {
+  const [toast, setToast] = useState<ToastState | null>(null)
+  const timer = useRef<number | undefined>(undefined)
+
+  const clear = () => {
+    if (timer.current !== undefined) window.clearTimeout(timer.current)
+  }
+
+  const show = useCallback<ToastFn>((message, opts) => {
+    clear()
+    setToast({ id: Date.now(), message, action: opts?.action })
+    timer.current = window.setTimeout(() => setToast(null), opts?.action ? 6000 : 4500)
+  }, [])
+
+  useEffect(() => () => clear(), [])
+
+  const dismiss = () => {
+    clear()
+    setToast(null)
+  }
+
+  return (
+    <ToastContext.Provider value={show}>
+      {children}
+      {toast && (
+        <div className="toast-host" role="status" aria-live="polite">
+          <div key={toast.id} className={toast.action ? 'toast has-action' : 'toast'}>
+            <span className="toast-message">{toast.message}</span>
+            {toast.action && (
+              <button
+                type="button"
+                className="toast-action"
+                onClick={() => {
+                  toast.action?.onClick()
+                  dismiss()
+                }}
+              >
+                {toast.action.label}
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+    </ToastContext.Provider>
+  )
+}
+
+/* ---------- view transitions (com fallback) ---------- */
+export function withViewTransition(fn: () => void) {
+  const doc = document as Document & { startViewTransition?: (cb: () => void) => unknown }
+  if (typeof doc.startViewTransition === 'function') {
+    doc.startViewTransition(fn)
+  } else {
+    fn()
+  }
 }
 
 interface TabDef {

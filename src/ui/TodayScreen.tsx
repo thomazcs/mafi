@@ -4,7 +4,7 @@ import { patientsForDate, isDone } from '../logic/schedule'
 import { packageAlert, openCycle } from '../logic/packages'
 import { fillTemplate, waLink } from '../logic/messages'
 import { todayISO, formatBR, formatMoney, monthLabel, monthOf, weekdayOf, weekDates, addDays } from '../logic/dates'
-import { Badge, Card, CheckCircle, WaButton } from './components'
+import { Badge, Card, CheckCircle, Chevron, Sheet, WaButton } from './components'
 import SettingsSheet from './SettingsSheet'
 import PatientForm from './PatientForm'
 import { newId, type Patient } from '../types'
@@ -91,13 +91,13 @@ export default function TodayScreen() {
 
       <div className="week-nav">
         <button type="button" className="week-arrow" aria-label="Semana anterior" onClick={() => goTo(addDays(selected, -7))}>
-          ‹
+          <Chevron dir="left" />
         </button>
         <span className="week-range">
           {formatBR(week[0])} – {formatBR(week[6])}
         </span>
         <button type="button" className="week-arrow" aria-label="Próxima semana" onClick={() => goTo(addDays(selected, 7))}>
-          ›
+          <Chevron dir="right" />
         </button>
       </div>
 
@@ -136,7 +136,7 @@ export default function TodayScreen() {
       {ordenados.length === 0 ? (
         <p className="empty">{ehHoje ? 'Nenhum atendimento hoje 🌿' : 'Nenhum atendimento nesse dia 🌿'}</p>
       ) : (
-        <ul className="day-list">
+        <ul className="list">
           {ordenados.map(p => (
             <li key={`${p.id}:${selected}`}>
               <PatientRow
@@ -227,11 +227,11 @@ function PatientRow({
     )
 
   return (
-    <div className={`day-row${done ? ' is-done' : ''}`}>
+    <div className={`list-row${done ? ' is-done' : ''}`}>
       {checkavel ? (
         <CheckCircle checked={done} onChange={toggle} label={`Presença de ${patient.nome}`} />
       ) : (
-        <span className="day-row-dot" aria-hidden="true" />
+        <span className="list-row-dot" aria-hidden="true" />
       )}
       <button type="button" className="patient-open stack" onClick={onOpen} aria-label={`Abrir ${patient.nome}`}>
         <span className="strong patient-name">{patient.nome}</span>
@@ -315,45 +315,40 @@ function DaySheet({
     patient.pacote === 'mensal' ? 'Mensal' : patient.pacote === 'dez_sessoes' ? `Pacote 10 sessões · ${usadas ?? 0}/10` : 'Avulso'
 
   return (
-    <>
-      <div className="sheet-backdrop" onClick={onClose} />
-      <div className="sheet" role="dialog" aria-label={patient.nome}>
-        <div className="sheet-handle" aria-hidden="true" />
-        <div className="sheet-header">
-          <span className="strong" style={{ fontSize: 17 }}>{patient.nome}</span>
-          <span className="muted" style={{ fontSize: 13 }}>
-            {pacoteLabel} · {formatMoney(patient.valor)}
-            {extra && ' · extra neste dia'}
-          </span>
-        </div>
-
-        {remarcando ? (
-          <div className="sheet-section">
-            <span className="field-label">Remarcar {formatBR(date)} para:</span>
-            <input type="date" value={novaData} min={date} onChange={e => setNovaData(e.target.value)} />
-            <div className="row" style={{ marginTop: 12 }}>
-              <button type="button" className="btn btn-ghost" onClick={() => setRemarcando(false)}>
-                Voltar
-              </button>
-              <button type="button" className="btn" disabled={!novaData} onClick={remarcar}>
-                Confirmar
-              </button>
-            </div>
-          </div>
-        ) : (
-          <div className="sheet-actions">
-            {alert === 'renovar_dez' && (
-              <button type="button" onClick={renovar}>Renovar pacote</button>
-            )}
-            <button type="button" onClick={() => setRemarcando(true)}>Remarcar este atendimento</button>
-            <button type="button" onClick={cancelar}>
-              {extra ? 'Remover atendimento extra' : 'Cancelar só neste dia'}
-            </button>
-            <button type="button" onClick={onOpenForm}>Ver ficha completa</button>
-          </div>
-        )}
+    <Sheet title={patient.nome} onClose={onClose}>
+      <div className="sheet-header">
+        <span className="muted" style={{ fontSize: 13 }}>
+          {pacoteLabel} · {formatMoney(patient.valor)}
+          {extra && ' · extra neste dia'}
+        </span>
       </div>
-    </>
+
+      {remarcando ? (
+        <div className="sheet-section">
+          <span className="field-label">Remarcar {formatBR(date)} para:</span>
+          <input type="date" value={novaData} min={date} onChange={e => setNovaData(e.target.value)} />
+          <div className="row" style={{ marginTop: 12 }}>
+            <button type="button" className="btn btn-ghost" onClick={() => setRemarcando(false)}>
+              Voltar
+            </button>
+            <button type="button" className="btn" disabled={!novaData} onClick={remarcar}>
+              Confirmar
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="sheet-actions">
+          {alert === 'renovar_dez' && (
+            <button type="button" onClick={renovar}>Renovar pacote</button>
+          )}
+          <button type="button" onClick={() => setRemarcando(true)}>Remarcar este atendimento</button>
+          <button type="button" onClick={cancelar}>
+            {extra ? 'Remover atendimento extra' : 'Cancelar só neste dia'}
+          </button>
+          <button type="button" onClick={onOpenForm}>Ver ficha completa</button>
+        </div>
+      )}
+    </Sheet>
   )
 }
 
