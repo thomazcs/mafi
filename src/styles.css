@@ -319,6 +319,17 @@ select {
   padding-right: 36px;
 }
 
+.field-error {
+  display: block;
+  margin-top: 6px;
+  font-size: 13px;
+  color: #B3423A;
+}
+
+input[aria-invalid='true'] {
+  border-color: #B3423A;
+}
+
 /* ---------- header único (título + ação à direita) ---------- */
 .screen-header {
   display: flex;
@@ -954,6 +965,10 @@ select {
 
 .sheet-actions button:active {
   opacity: 0.6;
+}
+
+.sheet-action-danger {
+  color: #B3423A;
 }
 
 /* ---------- toast ---------- */

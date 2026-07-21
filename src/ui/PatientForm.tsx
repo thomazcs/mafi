@@ -34,6 +34,7 @@ export default function PatientForm({
   const [dataInicio, setDataInicio] = useState(patient?.dataInicio ?? todayISO())
   const [pacote, setPacote] = useState<Pacote>(patient?.pacote ?? 'avulso')
   const [valor, setValor] = useState(patient ? String(patient.valor) : '')
+  const [tentou, setTentou] = useState(false)
 
   const editando = !!patient
 
@@ -42,11 +43,15 @@ export default function PatientForm({
 
   const nomeOk = nome.trim().length > 0
   const diasOk = diasSemana.length > 0
-  const valido = nomeOk && diasOk && Number(valor) > 0
+  const valorOk = Number(valor) > 0
+  const valido = nomeOk && diasOk && valorOk
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (!valido) return
+    if (!valido) {
+      setTentou(true)
+      return
+    }
     const p: Patient = {
       id: patient?.id ?? newId(),
       nome: nome.trim(),
@@ -75,8 +80,9 @@ export default function PatientForm({
 
       <form className="overlay-body" onSubmit={submit}>
         <label className="field">
-          <span className="field-label">Nome</span>
-          <input type="text" value={nome} onChange={e => setNome(e.target.value)} autoFocus />
+          <span className="field-label">Nome *</span>
+          <input type="text" value={nome} onChange={e => setNome(e.target.value)} autoFocus aria-invalid={tentou && !nomeOk} />
+          {tentou && !nomeOk && <span className="field-error">Informe o nome</span>}
         </label>
 
         <label className="field">
@@ -95,7 +101,7 @@ export default function PatientForm({
         </label>
 
         <div className="field">
-          <span className="field-label">Dias da semana</span>
+          <span className="field-label">Dias da semana *</span>
           <div className="day-chips" role="group" aria-label="Dias da semana">
             {CHIPS.map((c, i) => {
               const on = diasSemana.includes(i)
@@ -112,6 +118,7 @@ export default function PatientForm({
               )
             })}
           </div>
+          {tentou && !diasOk && <span className="field-error">Escolha pelo menos um dia</span>}
         </div>
 
         <label className="field">
@@ -129,7 +136,7 @@ export default function PatientForm({
         </label>
 
         <label className="field">
-          <span className="field-label">{VALOR_LABELS[pacote]}</span>
+          <span className="field-label">{VALOR_LABELS[pacote]} *</span>
           <input
             type="number"
             inputMode="decimal"
@@ -137,12 +144,16 @@ export default function PatientForm({
             min="0"
             value={valor}
             onChange={e => setValor(e.target.value)}
+            aria-invalid={tentou && !valorOk}
           />
+          {tentou && !valorOk && <span className="field-error">Informe um valor maior que zero</span>}
         </label>
 
-        <button type="submit" className="btn" disabled={!valido}>
-          Salvar
-        </button>
+        <div className="overlay-actions">
+          <button type="submit" className="btn">
+            Salvar
+          </button>
+        </div>
       </form>
     </div>
   )
